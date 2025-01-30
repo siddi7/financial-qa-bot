@@ -21,7 +21,7 @@ AI-powered financial statement analyzer using Google Gemini
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/financial-qa-bot.git
+git clone https://github.com/siddi7/financial-qa-bot.git
 cd financial-qa-bot
 ```
 
