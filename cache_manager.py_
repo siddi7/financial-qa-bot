@@ -1,0 +1,56 @@
+
+```python
+import os
+import json
+import hashlib
+from typing import Dict, Any
+from datetime import datetime, timedelta
+
+class CacheManager:
+    def __init__(self, cache_dir: str = ".cache"):
+        self.cache_dir = cache_dir
+        os.makedirs(cache_dir, exist_ok=True)
+        
+    def _get_cache_key(self, data: str) -> str:
+        """Generate a unique cache key"""
+        return hashlib.md5(data.encode()).hexdigest()
+        
+    def _get_cache_path(self, key: str) -> str:
+        """Get the full path for a cache file"""
+        return os.path.join(self.cache_dir, f"{key}.json")
+        
+    def set(self, data: str, value: Dict[str, Any], expires_in: timedelta = timedelta(hours=24)):
+        """Store data in cache with expiration"""
+        cache_key = self._get_cache_key(data)
+        cache_data = {
+            'value': value,
+            'expires_at': (datetime.now() + expires_in).isoformat()
+        }
+        
+        with open(self._get_cache_path(cache_key), 'w') as f:
+            json.dump(cache_data, f)
+            
+    def get(self, data: str) -> Dict[str, Any]:
+        """Retrieve data from cache if not expired"""
+        cache_key = self._get_cache_key(data)
+        cache_path = self._get_cache_path(cache_key)
+        
+        if not os.path.exists(cache_path):
+            return None
+            
+        with open(cache_path, 'r') as f:
+            cache_data = json.load(f)
+            
+        expires_at = datetime.fromisoformat(cache_data['expires_at'])
+        if datetime.now() > expires_at:
+            os.remove(cache_path)
+            return None
+            
+        return cache_data['value']
+        
+    def clear(self):
+        """Clear all cached data"""
+        for file in os.listdir(self.cache_dir):
+            if file.endswith('.json'):
+                os.remove(os.path.join(self.cache_dir, file))
+```

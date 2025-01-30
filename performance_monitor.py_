@@ -1,0 +1,51 @@
+
+```python
+import time
+from functools import wraps
+import logging
+from typing import Callable, Any
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class PerformanceMonitor:
+    def __init__(self):
+        self.metrics = {}
+        
+    def measure_time(self, func: Callable) -> Callable:
+        """Decorator to measure function execution time"""
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Any:
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            execution_time = time.time() - start_time
+            
+            # Store metrics
+            func_name = func.__name__
+            if func_name not in self.metrics:
+                self.metrics[func_name] = []
+            self.metrics[func_name].append(execution_time)
+            
+            # Log performance
+            logger.info(f"{func_name} took {execution_time:.2f} seconds to execute")
+            
+            return result
+        return wrapper
+        
+    def get_average_time(self, func_name: str) -> float:
+        """Get average execution time for a function"""
+        times = self.metrics.get(func_name, [])
+        return sum(times) / len(times) if times else 0
+        
+    def get_performance_report(self) -> dict:
+        """Generate performance report"""
+        report = {}
+        for func_name, times in self.metrics.items():
+            report[func_name] = {
+                'avg_time': sum(times) / len(times),
+                'min_time': min(times),
+                'max_time': max(times),
+                'calls': len(times)
+            }
+        return report
+```

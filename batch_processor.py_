@@ -1,0 +1,36 @@
+
+```python
+from typing import List, Dict, Generator
+import pandas as pd
+
+class BatchProcessor:
+    def __init__(self, batch_size: int = 1000):
+        self.batch_size = batch_size
+        
+    def process_in_batches(self, df: pd.DataFrame) -> Generator[pd.DataFrame, None, None]:
+        """Process large DataFrames in batches"""
+        for i in range(0, len(df), self.batch_size):
+            yield df.iloc[i:i + self.batch_size]
+            
+    def chunk_text(self, text: str, chunk_size: int = 1000) -> List[str]:
+        """Split large text into manageable chunks"""
+        words = text.split()
+        chunks = []
+        current_chunk = []
+        current_length = 0
+        
+        for word in words:
+            word_length = len(word)
+            if current_length + word_length > chunk_size:
+                chunks.append(' '.join(current_chunk))
+                current_chunk = [word]
+                current_length = word_length
+            else:
+                current_chunk.append(word)
+                current_length += word_length
+                
+        if current_chunk:
+            chunks.append(' '.join(current_chunk))
+            
+        return chunks
+```
