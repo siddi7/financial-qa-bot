@@ -1,0 +1,49 @@
+
+```python
+import pytest
+import pandas as pd
+import os
+from src.financial_qa_bot import FinancialQABot
+from src.utils.pdf_processor import PDFProcessor
+
+class TestPDFProcessor:
+    @pytest.fixture
+    def processor(self):
+        return PDFProcessor()
+    
+    def test_extract_data_empty_pdf(self, processor, tmp_path):
+        # Create empty PDF file for testing
+        test_file = tmp_path / "empty.pdf"
+        test_file.write_bytes(b"%PDF-1.7\n%\x93\x8C\x8B\x9E")
+        
+        result = processor.extract_data(str(test_file))
+        assert result.empty
+        
+    def test_extract_data_with_financials(self, processor):
+        # Test with sample financial data
+        sample_text = "Total Revenue: $1,234.56\nOperating Expenses: $789.10"
+        data = processor._extract_financial_data(sample_text)
+        assert len(data) == 2
+        assert data[0]['Item'] == 'Total Revenue'
+        assert data[0]['Value'] == 1234.56
+
+class TestFinancialQABot:
+    @pytest.fixture
+    def bot(self):
+        # Mock environment variables for testing
+        os.environ['GEMINI_API_KEY'] = 'test_key'
+        os.environ['PINECONE_API_KEY'] = 'test_key'
+        return FinancialQABot()
+    
+    def test_initialize_apis_missing_keys(self):
+        # Test initialization with missing API keys
+        os.environ.clear()
+        with pytest.raises(ValueError):
+            FinancialQABot()
+    
+    def test_answer_question_no_pdf(self, bot):
+        answer, context = bot.answer_question("What is the revenue?")
+        assert "Please upload a financial statement PDF first" in answer
+        assert context == ""
+
+```
